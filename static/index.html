@@ -896,6 +896,9 @@
 
       <!-- Header Action Buttons -->
       <div class="header-actions">
+        <button class="btn btn-outline-purple btn-sm" onclick="configureBackendUrl()" title="Configure Backend API Server (e.g. Google Colab / Cloudflare Tunnel URL)">
+          🌐 <span id="apiHostLabel">API: Auto</span>
+        </button>
         <button class="btn btn-outline-purple btn-sm" onclick="openManualModal()">
           ➕ Manual Gate Entry
         </button>
@@ -1271,6 +1274,56 @@
     let cameraStream = null;
     let autoScanInterval = null;
 
+    // Backend API Configuration (Supports Localhost, Cloudflare Tunnel, Google Colab, etc.)
+    const _urlParams = new URLSearchParams(window.location.search);
+    if (_urlParams.get("api")) {
+      localStorage.setItem("API_BASE_URL", _urlParams.get("api").replace(/\/+$/, ""));
+    }
+    function getApiBase() {
+      return localStorage.getItem("API_BASE_URL") || "";
+    }
+    function apiUrl(endpoint) {
+      const base = getApiBase();
+      return (base ? base.replace(/\/+$/, "") : "") + endpoint;
+    }
+    function updateBackendStatusUI() {
+      const base = getApiBase();
+      const label = document.getElementById("apiHostLabel");
+      if (label) {
+        if (!base) {
+          label.textContent = "API: Auto";
+          label.parentElement.className = "btn btn-outline-purple btn-sm";
+        } else {
+          try {
+            const parsed = new URL(base);
+            label.textContent = "API: " + parsed.hostname.substring(0, 15) + "..";
+            label.parentElement.className = "btn btn-primary btn-sm";
+          } catch {
+            label.textContent = "API: Cloud";
+          }
+        }
+      }
+      document.querySelectorAll('a[href*="/api/export/excel"]').forEach(a => {
+        a.href = apiUrl("/api/export/excel");
+      });
+    }
+    function configureBackendUrl() {
+      const current = getApiBase();
+      const input = prompt("Enter your Backend API URL (e.g. from Google Colab / Cloudflare):\n\nLeave empty to use Localhost/Same-Origin:", current);
+      if (input !== null) {
+        const clean = input.trim().replace(/\/+$/, "");
+        if (clean) {
+          localStorage.setItem("API_BASE_URL", clean);
+        } else {
+          localStorage.removeItem("API_BASE_URL");
+        }
+        updateBackendStatusUI();
+        loadStats();
+        loadRecords();
+        alert("Backend connected to: " + (clean || "Local / Default"));
+      }
+    }
+
     // Real-Time IST Clock
     function updateISTClock() {
       // Calculate IST: UTC + 5 hours 30 mins
@@ -1404,7 +1457,7 @@
       document.getElementById("scanStatusBadge").textContent = "Analyzing frame...";
 
       try {
-        const resp = await fetch("/api/scan/base64", {
+        const resp = await fetch(apiUrl("/api/scan/base64"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1483,7 +1536,7 @@
 
       try {
         const endpoint = isVideo ? "/api/scan/video" : "/api/scan/image";
-        const resp = await fetch(endpoint, {
+        const resp = await fetch(apiUrl(endpoint), {
           method: "POST",
           body: formData
         });
@@ -1528,10 +1581,10 @@
       progressText.textContent = "Loading repository test sample...";
       
       try {
-        const resp = await fetch("/api/test-samples");
+        const resp = await fetch(apiUrl("/api/test-samples"));
         const data = await resp.json();
         if (data.success && data.image) {
-          const scanResp = await fetch("/api/scan/base64", {
+          const scanResp = await fetch(apiUrl("/api/scan/base64"), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1582,7 +1635,7 @@
     // Load & Render Records Log
     async function loadRecords() {
       try {
-        const resp = await fetch(`/api/records?query=${encodeURIComponent(document.getElementById("logSearchInput").value)}&status=${currentFilter}`);
+        const resp = await fetch(apiUrl(`/api/records?query=${encodeURIComponent(document.getElementById("logSearchInput").value)}&status=${currentFilter}`));
         allRecords = await resp.json();
         renderRecordsTable(allRecords);
         document.getElementById("logCountBadge").textContent = allRecords.length;
@@ -1646,7 +1699,7 @@
     async function checkoutVehicle(recordId) {
       if (!confirm("Are you sure you want to mark this vehicle as Exited?")) return;
       try {
-        const resp = await fetch(`/api/records/checkout/${recordId}`, { method: "POST" });
+        const resp = await fetch(apiUrl(`/api/records/checkout/${recordId}`), { method: "POST" });
         const data = await resp.json();
         if (data.success) {
           loadRecords();
@@ -1659,7 +1712,7 @@
 
     async function confirmClearRecords() {
       if (confirm("Are you sure you want to clear all records?")) {
-        await fetch("/api/records/clear", { method: "DELETE" });
+        await fetch(apiUrl("/api/records/clear"), { method: "DELETE" });
         loadRecords();
         fetchStats();
       }
@@ -1674,7 +1727,7 @@
       }
 
       try {
-        const resp = await fetch(`/api/plate/${encodeURIComponent(plate)}`);
+        const resp = await fetch(apiUrl(`/api/plate/${encodeURIComponent(plate)}`));
         const data = await resp.json();
         
         document.getElementById("historyResultArea").style.display = "block";
@@ -1717,7 +1770,7 @@
     // Dashboard Stats Fetcher
     async function fetchStats() {
       try {
-        const resp = await fetch("/api/stats");
+        const resp = await fetch(apiUrl("/api/stats"));
         const stats = await resp.json();
         updateStatsUI(stats);
       } catch (err) {
@@ -1750,7 +1803,7 @@
       }
 
       try {
-        const resp = await fetch("/api/records/manual", {
+        const resp = await fetch(apiUrl("/api/records/manual"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1773,6 +1826,7 @@
     }
 
     // Initial load
+    updateBackendStatusUI();
     fetchStats();
     loadRecords();
   </script>
