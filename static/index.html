@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlateTrack AI — Vehicle ANPR & Stay Monitoring Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6D28D9;
+      --primary-hover: #5B21B6;
+      --primary-light: #EDE9FE;
+      --primary-subtle: #F5F3FF;
+      --primary-dark: #4C1D95;
+      
+      --accent-purple: #7C3AED;
+      --accent-indigo: #4F46E5;
+      
+      --bg-page: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --border-color: #E2E8F0;
+      --border-purple: #DDD6FE;
+      
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --text-purple: #6D28D9;
+      
+      --success: #16A34A;
+      --success-bg: #DCFCE7;
+      --success-text: #166534;
+      
+      --warning: #D97706;
+      --warning-bg: #FEF3C7;
+      
+      --danger: #DC2626;
+      --danger-bg: #FEE2E2;
+
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(109, 40, 217, 0.08), 0 2px 4px -2px rgba(109, 40, 217, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(109, 40, 217, 0.1), 0 4px 6px -4px rgba(109, 40, 217, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation Header */
+    header {
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 28px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .header-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--accent-purple), var(--primary-dark));
+      color: #FFFFFF;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 10px rgba(109, 40, 217, 0.25);
+    }
+
+    .brand-text h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-text h1 span.tag {
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 2px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-text p {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Live IST Clock */
+    .ist-clock-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--primary-subtle);
+      border: 1px solid var(--border-purple);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary-dark);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #10B981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 18px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.18s ease-in-out;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #FFFFFF;
+      border-color: var(--primary);
+      box-shadow: 0 2px 6px rgba(109, 40, 217, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 4px 10px rgba(109, 40, 217, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #FFFFFF;
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--primary-subtle);
+      border-color: var(--border-purple);
+      color: var(--primary);
+    }
+
+    .btn-outline-purple {
+      background: #FFFFFF;
+      color: var(--primary);
+      border-color: var(--border-purple);
+    }
+
+    .btn-outline-purple:hover {
+      background: var(--primary-subtle);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #FFFFFF;
+    }
+
+    .btn-success:hover {
+      background: #15803D;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 28px;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* KPI Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-purple);
+    }
+
+    .metric-icon-wrap {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .icon-purple { background: var(--primary-light); color: var(--primary-dark); }
+    .icon-green { background: #DCFCE7; color: #166534; }
+    .icon-indigo { background: #E0E7FF; color: #3730A3; }
+    .icon-amber { background: #FEF3C7; color: #92400E; }
+
+    .metric-info h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .metric-info .value {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+
+    .metric-info .subtext {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* Navigation Tabs */
+    .tabs-nav {
+      display: flex;
+      gap: 8px;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 24px;
+      background: transparent;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 12px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--primary);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* Tab Content Panes */
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Panels */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .card-header h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-header h2 span.desc {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    /* Camera Scanner Section */
+    .scanner-layout {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 992px) {
+      .scanner-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .video-viewport {
+      background: #0F172A;
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 16/9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--border-purple);
+    }
+
+    #webcamVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    #webcamCanvas {
+      display: none;
+    }
+
+    .camera-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #94A3B8;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .camera-placeholder .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      color: var(--primary-light);
+    }
+
+    .camera-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .gate-mode-selector {
+      display: flex;
+      background: var(--primary-subtle);
+      border: 1px solid var(--border-purple);
+      border-radius: 10px;
+      padding: 3px;
+    }
+
+    .gate-mode-btn {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+
+    .gate-mode-btn.active {
+      background: #FFFFFF;
+      color: var(--primary-dark);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Scan Results Card */
+    .scan-result-card {
+      background: var(--primary-subtle);
+      border: 1px solid var(--border-purple);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .status-alert {
+      padding: 14px 18px;
+      border-radius: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 13px;
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+    .status-alert.entry {
+      background: #DCFCE7;
+      border: 1px solid #86EFAC;
+      color: #166534;
+    }
+
+    .status-alert.exit {
+      background: #EDE9FE;
+      border: 1px solid #C4B5FD;
+      color: #4C1D95;
+    }
+
+    .status-alert.idle {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+
+    /* Indian License Plate Badge */
+    .ind-plate-badge {
+      display: inline-flex;
+      align-items: center;
+      background: #FFFFFF;
+      border: 2.5px solid #0F172A;
+      border-radius: 7px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .ind-plate-badge .ind-strip {
+      background: #0038A8;
+      color: #FFFFFF;
+      padding: 4px 7px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      line-height: 1.1;
+      border-right: 2px solid #0F172A;
+    }
+
+    .ind-plate-badge .ind-strip .chakra {
+      font-size: 8px;
+      color: #FF9933;
+    }
+
+    .ind-plate-badge .plate-text {
+      padding: 4px 12px;
+      font-size: 17px;
+      color: #0F172A;
+      text-transform: uppercase;
+    }
+
+    .ind-plate-badge.lg .plate-text {
+      font-size: 22px;
+      padding: 8px 18px;
+    }
+
+    /* Upload Area */
+    .upload-zone {
+      border: 2px dashed var(--border-purple);
+      border-radius: 16px;
+      background: var(--primary-subtle);
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--primary);
+      background: #EDE9FE;
+    }
+
+    .upload-zone .icon {
+      font-size: 42px;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .upload-zone h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .upload-zone p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Data Table */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      background: #FFFFFF;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background: var(--primary-subtle);
+      color: var(--primary-dark);
+      font-weight: 700;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--border-purple);
+      white-space: nowrap;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: middle;
+      color: var(--text-main);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: #FAFAFD;
+    }
+
+    /* Status Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .badge-inside {
+      background: #DCFCE7;
+      color: #166534;
+      border: 1px solid #BBF7D0;
+    }
+
+    .badge-inside .dot {
+      width: 6px;
+      height: 6px;
+      background: #16A34A;
+      border-radius: 50%;
+    }
+
+    .badge-exited {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border: 1px solid var(--border-purple);
+    }
+
+    .badge-exited .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--primary);
+      border-radius: 50%;
+    }
+
+    .duration-pill {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary-dark);
+      background: var(--primary-subtle);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-purple);
+    }
+
+    /* Search & Filter Bar */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      font-family: inherit;
+      font-size: 13px;
+      padding: 10px 14px 10px 38px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: #FFFFFF;
+      transition: all 0.2s;
+    }
+
+    .search-input-wrap input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.12);
+    }
+
+    .search-input-wrap .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-window {
+      background: #FFFFFF;
+      border-radius: 20px;
+      max-width: 480px;
+      width: 100%;
+      padding: 28px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-purple);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      font-family: inherit;
+      font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+    }
+
+    .form-group input:focus, .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* Timeline in History Tab */
+    .timeline {
+      position: relative;
+      padding-left: 24px;
+      margin-top: 16px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border-purple);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -24px;
+      top: 4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 3px solid var(--primary);
+    }
+
+    .timeline-content {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Footer */
+    footer {
+      background: #FFFFFF;
+      border-top: 1px solid var(--border-color);
+      padding: 16px 28px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+
+    .badge-count {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">🚘</div>
+        <div class="brand-text">
+          <h1>PlateTrack AI <span class="tag">ANPR & Stay System</span></h1>
+          <p>Indian Vehicle Entry-Exit Monitoring & Real-Time Plate Tracking</p>
+        </div>
+      </div>
+
+      <!-- Real IST Clock -->
+      <div class="ist-clock-badge">
+        <span class="pulse-dot"></span>
+        <span id="liveClockIST">Loading Indian Standard Time...</span>
+      </div>
+
+      <!-- Header Action Buttons -->
+      <div class="header-actions">
+        <button class="btn btn-outline-purple btn-sm" onclick="openManualModal()">
+          ➕ Manual Gate Entry
+        </button>
+        <a href="/api/export/excel" class="btn btn-primary btn-sm" id="btnDownloadExcel">
+          📥 Download Excel Report
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+
+    <!-- Top KPI Metrics Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-icon-wrap icon-purple">🚗</div>
+        <div class="metric-info">
+          <h3>Total Vehicles Today</h3>
+          <div class="value" id="statTotalToday">0</div>
+          <div class="subtext">Active & processed sessions</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-wrap icon-green">🟢</div>
+        <div class="metric-info">
+          <h3>Currently Inside</h3>
+          <div class="value" id="statCurrentlyInside" style="color: var(--success);">0</div>
+          <div class="subtext">Parked inside premises</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-wrap icon-indigo">🏁</div>
+        <div class="metric-info">
+          <h3>Exited Vehicles</h3>
+          <div class="value" id="statExitedToday">0</div>
+          <div class="subtext">Departed with recorded stay</div>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-wrap icon-amber">⏱️</div>
+        <div class="metric-info">
+          <h3>Avg. Stay Duration</h3>
+          <div class="value" id="statAvgStay">0 mins</div>
+          <div class="subtext">Calculated parking duration</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('tabCamera')">
+        📹 Live Camera & Gate ANPR
+      </button>
+      <button class="tab-btn" onclick="switchTab('tabUpload')">
+        📁 Upload Photo / Video
+      </button>
+      <button class="tab-btn" onclick="switchTab('tabLogs')">
+        📋 Entry & Exit Logs <span class="badge-count" id="logCountBadge">0</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('tabSearch')">
+        🔍 Plate Search & Stay History
+      </button>
+    </div>
+
+    <!-- TAB 1: Live Camera Feed & Scanner -->
+    <div id="tabCamera" class="tab-pane active">
+      <div class="scanner-layout">
+        <!-- Video Viewport -->
+        <div class="card">
+          <div class="card-header">
+            <h2>📹 Live Gate Camera Feed <span class="desc">Automated License Plate Recognition</span></h2>
+            <div class="gate-mode-selector">
+              <button class="gate-mode-btn active" id="modeAuto" onclick="setGateMode('auto')">🔄 Smart Auto</button>
+              <button class="gate-mode-btn" id="modeEntry" onclick="setGateMode('entry')">🟢 Entry Gate (IN)</button>
+              <button class="gate-mode-btn" id="modeExit" onclick="setGateMode('exit')">🔴 Exit Gate (OUT)</button>
+            </div>
+          </div>
+
+          <div class="video-viewport" id="viewportArea">
+            <video id="webcamVideo" autoplay playsinline muted></video>
+            <canvas id="webcamCanvas"></canvas>
+            
+            <div class="camera-placeholder" id="cameraPlaceholder">
+              <div class="icon">📷</div>
+              <h3 style="color: #FFFFFF; font-size: 17px; margin-bottom: 6px;">Camera is Currently Off</h3>
+              <p style="max-width: 380px; font-size: 13px;">Turn on your camera to start scanning vehicle number plates in real-time as they enter or exit the gate.</p>
+              <button class="btn btn-primary" style="margin-top: 16px;" onclick="toggleCamera()">
+                ⚡ Turn On Camera
+              </button>
+            </div>
+          </div>
+
+          <div class="camera-controls">
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <button class="btn btn-primary" id="btnToggleCam" onclick="toggleCamera()">
+                ⚡ Start Camera
+              </button>
+              <button class="btn btn-secondary" id="btnCaptureNow" onclick="scanCurrentFrame()" disabled>
+                📸 Scan Frame Now
+              </button>
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer;">
+                <input type="checkbox" id="autoScanToggle" onchange="toggleAutoScan(this.checked)" disabled>
+                Continuous Scan (Every 2s)
+              </label>
+            </div>
+            
+            <span id="scanStatusBadge" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">
+              Ready
+            </span>
+          </div>
+        </div>
+
+        <!-- Latest Live Detection Result -->
+        <div class="card">
+          <div class="card-header">
+            <h2>🎯 Latest Detection <span class="desc">Real-Time Verification</span></h2>
+          </div>
+
+          <div class="scan-result-card">
+            <div id="latestPlateContainer" style="text-align: center; padding: 12px 0;">
+              <div class="ind-plate-badge lg" id="displayPlateBadge">
+                <div class="ind-strip">
+                  <span class="chakra">●</span>
+                  <span>IND</span>
+                </div>
+                <div class="plate-text" id="displayPlateText">SCANNING...</div>
+              </div>
+            </div>
+
+            <!-- Event Action Banner -->
+            <div id="eventActionBanner" class="status-alert idle">
+              <span style="font-size: 18px;">ℹ️</span>
+              <div>
+                <strong>Awaiting Vehicle</strong>
+                <p style="margin-top: 2px;">When a vehicle enters or exits, its license plate and exact Indian timestamp will appear here.</p>
+              </div>
+            </div>
+
+            <!-- Detection Details List -->
+            <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 12px; padding: 14px;">
+              <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 13px;">
+                <span style="color: var(--text-muted);">Recorded Time (IST):</span>
+                <strong id="displayTimestamp">-</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 13px;">
+                <span style="color: var(--text-muted);">Vehicle Status:</span>
+                <span id="displayStatusBadge"><span class="badge badge-inside"><span class="dot"></span> READY</span></span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px;">
+                <span style="color: var(--text-muted);">Stay Duration:</span>
+                <strong id="displayStayDuration" style="color: var(--primary);">-</strong>
+              </div>
+            </div>
+
+            <!-- Annotated Snapshot Image Preview -->
+            <div id="annotatedSnapshotWrap" style="display: none;">
+              <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Detection Snapshot</div>
+              <img id="annotatedSnapshotImg" src="" style="width: 100%; border-radius: 10px; border: 1px solid var(--border-purple); object-fit: contain; max-height: 200px;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Upload Photo or Video -->
+    <div id="tabUpload" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <h2>📁 Upload Media for Plate Recognition <span class="desc">Supports Photos (.jpg, .png) & Videos (.mp4, .avi)</span></h2>
+          <div class="gate-mode-selector">
+            <button class="gate-mode-btn active" id="uploadModeAuto" onclick="setUploadGateMode('auto')">🔄 Smart Auto</button>
+            <button class="gate-mode-btn" id="uploadModeEntry" onclick="setUploadGateMode('entry')">🟢 Entry (IN)</button>
+            <button class="gate-mode-btn" id="uploadModeExit" onclick="setUploadGateMode('exit')">🔴 Exit (OUT)</button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <!-- Drop Zone -->
+          <div>
+            <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+              <div class="icon">☁️</div>
+              <h3>Click to select or drag & drop vehicle image/video</h3>
+              <p>Supports clear photos of Indian vehicles or gate surveillance video clips</p>
+              <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;" onchange="handleFileUpload(this.files)">
+            </div>
+
+            <div style="margin-top: 18px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+              <button class="btn btn-outline-purple btn-sm" onclick="loadSampleTestImage()">
+                ⚡ Load Sample Plate (Instant Test)
+              </button>
+              <span id="uploadProgressText" style="font-size: 12px; font-weight: 600; color: var(--primary);"></span>
+            </div>
+          </div>
+
+          <!-- Uploaded Preview & Output -->
+          <div>
+            <div id="uploadResultArea" style="background: var(--primary-subtle); border: 1px solid var(--border-purple); border-radius: 16px; padding: 20px; min-height: 280px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+              <div id="uploadEmptyState">
+                <div style="font-size: 36px; margin-bottom: 8px;">📷</div>
+                <h4 style="color: var(--primary-dark); font-size: 15px;">No File Processed Yet</h4>
+                <p style="font-size: 13px; color: var(--text-muted); max-width: 300px; margin-top: 4px;">Upload a vehicle photo or video on the left to see instant detection & entry/exit logging.</p>
+              </div>
+
+              <div id="uploadOutputContent" style="display: none; width: 100%;">
+                <img id="uploadAnnotatedPreview" src="" style="width: 100%; max-height: 240px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border-purple); margin-bottom: 14px;">
+                <div id="uploadEventSummary" class="status-alert entry" style="text-align: left;">
+                  <!-- Dynamic summary -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Entry & Exit Records Log Table -->
+    <div id="tabLogs" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <h2>📋 Complete Vehicle Log <span class="desc">Accurate Indian Standard Timestamps & Stay Durations</span></h2>
+          <div style="display: flex; gap: 10px;">
+            <a href="/api/export/excel" class="btn btn-primary btn-sm">
+              📥 Export to Excel (.xlsx)
+            </a>
+            <button class="btn btn-secondary btn-sm" onclick="loadRecords()">
+              🔄 Refresh
+            </button>
+            <button class="btn btn-outline-purple btn-sm" onclick="confirmClearRecords()">
+              🗑️ Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="logSearchInput" placeholder="Search by License Plate (e.g. KA02, DL, MH)..." oninput="filterRecordsTable()">
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" id="filterAll" onclick="setFilter('ALL')">All Records</button>
+            <button class="btn btn-secondary btn-sm" id="filterInside" onclick="setFilter('INSIDE')">🟢 Currently Inside</button>
+            <button class="btn btn-secondary btn-sm" id="filterExited" onclick="setFilter('EXITED')">🟣 Exited</button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+          <table id="recordsTable">
+            <thead>
+              <tr>
+                <th>Record ID</th>
+                <th>License Plate</th>
+                <th>Status</th>
+                <th>Entry Time (IST)</th>
+                <th>Exit Time (IST)</th>
+                <th>Stay Duration</th>
+                <th>Conf.</th>
+                <th>Source</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTableBody">
+              <tr>
+                <td colspan="9" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                  Loading records...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Vehicle Stay History Search -->
+    <div id="tabSearch" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <h2>🔍 Vehicle History & Stay Lookup <span class="desc">Check exact entry/exit times & total duration for any number plate</span></h2>
+        </div>
+
+        <div style="max-width: 680px; margin: 0 auto; padding: 20px 0;">
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="historyPlateInput" placeholder="Enter Registration Number (e.g. KA02HN1826)..." style="flex: 1; padding: 12px 16px; border-radius: 12px; border: 1.5px solid var(--border-purple); font-size: 15px; font-weight: 600; text-transform: uppercase;">
+            <button class="btn btn-primary" onclick="lookupPlateHistory()">
+              🔍 Search Vehicle
+            </button>
+          </div>
+
+          <div id="historyResultArea" style="margin-top: 28px; display: none;">
+            <!-- Vehicle Summary Card -->
+            <div style="background: var(--primary-subtle); border: 1.5px solid var(--border-purple); border-radius: 16px; padding: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div>
+                <div class="ind-plate-badge lg" id="histPlateBadge">
+                  <div class="ind-strip"><span class="chakra">●</span><span>IND</span></div>
+                  <div class="plate-text" id="histPlateNumber">-</div>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Current Parking Status</div>
+                <div id="histStatusBadge" style="margin-top: 4px;">-</div>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+              <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; text-align: center;">
+                <div style="font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Visits to Premises</div>
+                <div style="font-size: 24px; font-weight: 800; color: var(--primary); margin-top: 4px;" id="histTotalVisits">0</div>
+              </div>
+              <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; text-align: center;">
+                <div style="font-size: 12px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Cumulative Stay Duration</div>
+                <div style="font-size: 24px; font-weight: 800; color: var(--primary-dark); margin-top: 4px;" id="histCumulativeStay">-</div>
+              </div>
+            </div>
+
+            <!-- Chronological Timeline -->
+            <h3 style="font-size: 15px; font-weight: 700; color: var(--text-main); margin-top: 24px;">Visit History Timeline</h3>
+            <div class="timeline" id="historyTimeline">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Manual Entry Modal -->
+  <div class="modal-backdrop" id="manualModal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3>➕ Manual Vehicle Gate Entry</h3>
+        <button class="modal-close" onclick="closeManualModal()">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label>Vehicle License Plate</label>
+        <input type="text" id="manualPlateInput" placeholder="e.g. DL01AB1234 or KA02HN1826" style="text-transform: uppercase; font-weight: 700; font-family: 'JetBrains Mono', monospace;">
+      </div>
+
+      <div class="form-group">
+        <label>Gate Action</label>
+        <select id="manualStatusSelect">
+          <option value="INSIDE">Vehicle Entering (Check IN)</option>
+          <option value="EXITED">Vehicle Leaving (Check OUT)</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;">
+        <button class="btn btn-secondary" onclick="closeManualModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitManualEntry()">Submit Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    PlateTrack AI &bull; Smart Indian Vehicle Entry-Exit & Number Plate Tracking System &bull; Real IST Timing & Automated Duration Calculation
+  </footer>
+
+  <script>
+    // Global State
+    let currentGateMode = "auto";
+    let uploadGateMode = "auto";
+    let currentFilter = "ALL";
+    let allRecords = [];
+    let isCameraActive = false;
+    let cameraStream = null;
+    let autoScanInterval = null;
+
+    // Real-Time IST Clock
+    function updateISTClock() {
+      // Calculate IST: UTC + 5 hours 30 mins
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const istTime = new Date(utc + (3600000 * 5.5));
+      
+      const options = { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        hour12: true 
+      };
+      
+      const formatted = istTime.toLocaleString('en-IN', options) + " IST";
+      const clockEl = document.getElementById("liveClockIST");
+      if (clockEl) {
+        clockEl.textContent = formatted;
+      }
+    }
+    setInterval(updateISTClock, 1000);
+    updateISTClock();
+
+    // Tab Navigation
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-pane").forEach(pane => pane.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+      
+      const targetPane = document.getElementById(tabId);
+      if (targetPane) targetPane.classList.add("active");
+      
+      const activeBtn = Array.from(document.querySelectorAll(".tab-btn")).find(b => b.getAttribute("onclick")?.includes(tabId));
+      if (activeBtn) activeBtn.classList.add("active");
+
+      if (tabId === "tabLogs") {
+        loadRecords();
+      }
+    }
+
+    // Gate Mode Selection
+    function setGateMode(mode) {
+      currentGateMode = mode;
+      document.getElementById("modeAuto").classList.toggle("active", mode === "auto");
+      document.getElementById("modeEntry").classList.toggle("active", mode === "entry");
+      document.getElementById("modeExit").classList.toggle("active", mode === "exit");
+    }
+
+    function setUploadGateMode(mode) {
+      uploadGateMode = mode;
+      document.getElementById("uploadModeAuto").classList.toggle("active", mode === "auto");
+      document.getElementById("uploadModeEntry").classList.toggle("active", mode === "entry");
+      document.getElementById("uploadModeExit").classList.toggle("active", mode === "exit");
+    }
+
+    // Camera Functions
+    async function toggleCamera() {
+      const video = document.getElementById("webcamVideo");
+      const placeholder = document.getElementById("cameraPlaceholder");
+      const btnToggle = document.getElementById("btnToggleCam");
+      const btnCapture = document.getElementById("btnCaptureNow");
+      const autoToggle = document.getElementById("autoScanToggle");
+
+      if (isCameraActive) {
+        // Stop Camera
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          cameraStream = null;
+        }
+        video.srcObject = null;
+        video.style.display = "none";
+        placeholder.style.display = "flex";
+        isCameraActive = false;
+        btnToggle.textContent = "⚡ Start Camera";
+        btnToggle.classList.remove("btn-secondary");
+        btnToggle.classList.add("btn-primary");
+        btnCapture.disabled = true;
+        autoToggle.disabled = true;
+        autoToggle.checked = false;
+        clearInterval(autoScanInterval);
+        document.getElementById("scanStatusBadge").textContent = "Camera Off";
+      } else {
+        // Start Camera
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "environment" }
+          });
+          video.srcObject = cameraStream;
+          video.style.display = "block";
+          placeholder.style.display = "none";
+          isCameraActive = true;
+          btnToggle.textContent = "🛑 Stop Camera";
+          btnToggle.classList.remove("btn-primary");
+          btnToggle.classList.add("btn-secondary");
+          btnCapture.disabled = false;
+          autoToggle.disabled = false;
+          document.getElementById("scanStatusBadge").textContent = "Camera Streaming Live";
+        } catch (err) {
+          alert("Could not access camera: " + err.message + "\nPlease grant camera permission in your browser.");
+        }
+      }
+    }
+
+    function toggleAutoScan(enabled) {
+      if (enabled) {
+        autoScanInterval = setInterval(() => {
+          if (isCameraActive) {
+            scanCurrentFrame();
+          }
+        }, 2200);
+        document.getElementById("scanStatusBadge").textContent = "Continuous Scanning Active (2s)";
+      } else {
+        clearInterval(autoScanInterval);
+        document.getElementById("scanStatusBadge").textContent = "Continuous Scan Paused";
+      }
+    }
+
+    async function scanCurrentFrame() {
+      if (!isCameraActive) return;
+      const video = document.getElementById("webcamVideo");
+      const canvas = document.getElementById("webcamCanvas");
+      
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      const b64Image = canvas.toDataURL("image/jpeg", 0.85);
+      document.getElementById("scanStatusBadge").textContent = "Analyzing frame...";
+
+      try {
+        const resp = await fetch("/api/scan/base64", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image: b64Image,
+            mode: currentGateMode,
+            source: "Live Gate Camera"
+          })
+        });
+        const data = await resp.json();
+        handleDetectionResponse(data);
+      } catch (err) {
+        console.error("Scan error:", err);
+        document.getElementById("scanStatusBadge").textContent = "Scan error: " + err.message;
+      }
+    }
+
+    function handleDetectionResponse(data) {
+      if (!data.success) return;
+      
+      const plates = data.plates || [];
+      const events = data.events || [];
+
+      if (plates.length > 0) {
+        const plate = plates[0];
+        document.getElementById("displayPlateText").textContent = plate.plate_number;
+        document.getElementById("scanStatusBadge").textContent = `Detected: ${plate.plate_number} (${Math.round(plate.confidence*100)}%)`;
+        
+        if (data.annotated_image) {
+          document.getElementById("annotatedSnapshotWrap").style.display = "block";
+          document.getElementById("annotatedSnapshotImg").src = data.annotated_image;
+        }
+
+        if (events.length > 0) {
+          const ev = events[0];
+          const banner = document.getElementById("eventActionBanner");
+          const rec = ev.record || {};
+
+          document.getElementById("displayTimestamp").textContent = rec.exit_time !== "-" ? rec.exit_time : rec.entry_time || "-";
+          
+          if (ev.action === "ENTRY") {
+            banner.className = "status-alert entry";
+            banner.innerHTML = `<span>🟢</span><div><strong>Vehicle Checked In!</strong><p>${ev.message}</p></div>`;
+            document.getElementById("displayStatusBadge").innerHTML = `<span class="badge badge-inside"><span class="dot"></span> INSIDE</span>`;
+            document.getElementById("displayStayDuration").textContent = "Active Inside";
+          } else if (ev.action === "EXIT") {
+            banner.className = "status-alert exit";
+            banner.innerHTML = `<span>🟣</span><div><strong>Vehicle Checked Out!</strong><p>${ev.message}</p></div>`;
+            document.getElementById("displayStatusBadge").innerHTML = `<span class="badge badge-exited"><span class="dot"></span> EXITED</span>`;
+            document.getElementById("displayStayDuration").textContent = rec.duration || "Recorded";
+          } else if (ev.action === "ALREADY_INSIDE") {
+            banner.className = "status-alert idle";
+            banner.innerHTML = `<span>ℹ️</span><div><strong>Already Inside</strong><p>${ev.message}</p></div>`;
+          }
+        }
+      } else {
+        document.getElementById("scanStatusBadge").textContent = "No license plate found in frame";
+      }
+
+      if (data.stats) {
+        updateStatsUI(data.stats);
+      }
+    }
+
+    // Upload Photo/Video Handling
+    async function handleFileUpload(files) {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      const isVideo = file.type.startsWith("video/");
+      
+      const progressText = document.getElementById("uploadProgressText");
+      progressText.textContent = isVideo ? "Processing video frames (tracking)..." : "Analyzing image...";
+      
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("mode", uploadGateMode);
+
+      try {
+        const endpoint = isVideo ? "/api/scan/video" : "/api/scan/image";
+        const resp = await fetch(endpoint, {
+          method: "POST",
+          body: formData
+        });
+        const data = await resp.json();
+        
+        progressText.textContent = "Processing complete!";
+        document.getElementById("uploadEmptyState").style.display = "none";
+        document.getElementById("uploadOutputContent").style.display = "block";
+
+        if (data.annotated_image) {
+          document.getElementById("uploadAnnotatedPreview").src = data.annotated_image;
+          document.getElementById("uploadAnnotatedPreview").style.display = "block";
+        } else {
+          document.getElementById("uploadAnnotatedPreview").style.display = "none";
+        }
+
+        const summaryBox = document.getElementById("uploadEventSummary");
+        if (data.events && data.events.length > 0) {
+          const firstEv = data.events[0];
+          summaryBox.className = firstEv.action === "EXIT" ? "status-alert exit" : "status-alert entry";
+          summaryBox.innerHTML = `<strong>Result:</strong> ${firstEv.message || "Plate processed successfully"}`;
+        } else if (data.detected_plates && data.detected_plates.length > 0) {
+          summaryBox.className = "status-alert entry";
+          summaryBox.innerHTML = `<strong>Plates Identified in Video:</strong> ${data.detected_plates.map(p => p.plate_number).join(", ")}`;
+        } else {
+          summaryBox.className = "status-alert idle";
+          summaryBox.innerHTML = "No license plate recognized in uploaded file.";
+        }
+
+        if (data.stats) {
+          updateStatsUI(data.stats);
+        }
+        loadRecords();
+      } catch (err) {
+        progressText.textContent = "Error: " + err.message;
+      }
+    }
+
+    // 1-Click Instant Sample Test
+    async function loadSampleTestImage() {
+      const progressText = document.getElementById("uploadProgressText");
+      progressText.textContent = "Loading repository test sample...";
+      
+      try {
+        const resp = await fetch("/api/test-samples");
+        const data = await resp.json();
+        if (data.success && data.image) {
+          const scanResp = await fetch("/api/scan/base64", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              image: data.image,
+              mode: uploadGateMode,
+              source: `Sample (${data.filename})`
+            })
+          });
+          const scanData = await scanResp.json();
+          progressText.textContent = "Sample processed successfully!";
+          
+          document.getElementById("uploadEmptyState").style.display = "none";
+          document.getElementById("uploadOutputContent").style.display = "block";
+          if (scanData.annotated_image) {
+            document.getElementById("uploadAnnotatedPreview").src = scanData.annotated_image;
+            document.getElementById("uploadAnnotatedPreview").style.display = "block";
+          }
+          
+          const summaryBox = document.getElementById("uploadEventSummary");
+          if (scanData.events && scanData.events.length > 0) {
+            summaryBox.className = "status-alert entry";
+            summaryBox.innerHTML = `<strong>Sample Verified:</strong> ${scanData.events[0].message}`;
+          }
+          if (scanData.stats) updateStatsUI(scanData.stats);
+          loadRecords();
+        } else {
+          progressText.textContent = "Sample file not found";
+        }
+      } catch (err) {
+        progressText.textContent = "Error loading sample: " + err.message;
+      }
+    }
+
+    // Drag and Drop listeners
+    const dropZone = document.getElementById("dropZone");
+    ['dragenter', 'dragover'].forEach(name => {
+      dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+    });
+    ['dragleave', 'drop'].forEach(name => {
+      dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.remove("dragover"); });
+    });
+    dropZone.addEventListener('drop', (e) => {
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFileUpload(e.dataTransfer.files);
+      }
+    });
+
+    // Load & Render Records Log
+    async function loadRecords() {
+      try {
+        const resp = await fetch(`/api/records?query=${encodeURIComponent(document.getElementById("logSearchInput").value)}&status=${currentFilter}`);
+        allRecords = await resp.json();
+        renderRecordsTable(allRecords);
+        document.getElementById("logCountBadge").textContent = allRecords.length;
+      } catch (err) {
+        console.error("Load records error:", err);
+      }
+    }
+
+    function renderRecordsTable(records) {
+      const tbody = document.getElementById("recordsTableBody");
+      if (!records || records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 36px; color: var(--text-muted);">No vehicle entries match your search.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = records.map(r => {
+        const isInside = r.status === "INSIDE";
+        const statusBadge = isInside 
+          ? `<span class="badge badge-inside"><span class="dot"></span> INSIDE</span>`
+          : `<span class="badge badge-exited"><span class="dot"></span> EXITED</span>`;
+
+        const actionBtn = isInside 
+          ? `<button class="btn btn-outline-purple btn-sm" onclick="checkoutVehicle('${r.id}')">Check Out</button>`
+          : `<span style="font-size: 12px; color: var(--text-muted);">Completed</span>`;
+
+        return `
+          <tr>
+            <td style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--text-muted);">${r.id}</td>
+            <td>
+              <div class="ind-plate-badge">
+                <div class="ind-strip"><span class="chakra">●</span><span>IND</span></div>
+                <div class="plate-text">${r.plate_number}</div>
+              </div>
+            </td>
+            <td>${statusBadge}</td>
+            <td style="font-size: 12px; white-space: nowrap;">${r.entry_time || "-"}</td>
+            <td style="font-size: 12px; white-space: nowrap;">${r.exit_time || "-"}</td>
+            <td>
+              <span class="duration-pill">${r.duration || "-"}</span>
+            </td>
+            <td style="font-family: 'JetBrains Mono', monospace; font-size: 12px;">${Math.round((r.confidence||0)*100)}%</td>
+            <td style="font-size: 12px; color: var(--text-muted);">${r.source || "Camera"}</td>
+            <td>${actionBtn}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function filterRecordsTable() {
+      loadRecords();
+    }
+
+    function setFilter(filterType) {
+      currentFilter = filterType;
+      document.getElementById("filterAll").className = filterType === "ALL" ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm";
+      document.getElementById("filterInside").className = filterType === "INSIDE" ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm";
+      document.getElementById("filterExited").className = filterType === "EXITED" ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm";
+      loadRecords();
+    }
+
+    async function checkoutVehicle(recordId) {
+      if (!confirm("Are you sure you want to mark this vehicle as Exited?")) return;
+      try {
+        const resp = await fetch(`/api/records/checkout/${recordId}`, { method: "POST" });
+        const data = await resp.json();
+        if (data.success) {
+          loadRecords();
+          fetchStats();
+        }
+      } catch (err) {
+        alert("Checkout failed: " + err.message);
+      }
+    }
+
+    async function confirmClearRecords() {
+      if (confirm("Are you sure you want to clear all records?")) {
+        await fetch("/api/records/clear", { method: "DELETE" });
+        loadRecords();
+        fetchStats();
+      }
+    }
+
+    // Vehicle Plate Lookup
+    async function lookupPlateHistory() {
+      const plate = document.getElementById("historyPlateInput").value.trim().toUpperCase();
+      if (!plate) {
+        alert("Please enter a vehicle plate number");
+        return;
+      }
+
+      try {
+        const resp = await fetch(`/api/plate/${encodeURIComponent(plate)}`);
+        const data = await resp.json();
+        
+        document.getElementById("historyResultArea").style.display = "block";
+        document.getElementById("histPlateNumber").textContent = data.plate_number;
+        document.getElementById("histTotalVisits").textContent = data.total_visits;
+        document.getElementById("histCumulativeStay").textContent = data.cumulative_stay;
+        
+        document.getElementById("histStatusBadge").innerHTML = data.is_inside 
+          ? `<span class="badge badge-inside"><span class="dot"></span> CURRENTLY INSIDE</span>`
+          : `<span class="badge badge-exited"><span class="dot"></span> NOT ON PREMISES</span>`;
+
+        const timeline = document.getElementById("historyTimeline");
+        if (data.visits && data.visits.length > 0) {
+          timeline.innerHTML = data.visits.map((v, i) => `
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <strong>Visit #${data.visits.length - i} (${v.id})</strong>
+                  <span class="badge ${v.status === 'INSIDE' ? 'badge-inside' : 'badge-exited'}">${v.status}</span>
+                </div>
+                <div style="font-size: 13px; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
+                  <div><strong>Entry:</strong> ${v.entry_time}</div>
+                  <div><strong>Exit:</strong> ${v.exit_time || "Currently inside"}</div>
+                </div>
+                <div style="margin-top: 8px; font-size: 12px;">
+                  Stay Duration: <span class="duration-pill">${v.duration}</span>
+                </div>
+              </div>
+            </div>
+          `).join("");
+        } else {
+          timeline.innerHTML = `<p style="color: var(--text-muted); padding: 10px 0;">No prior visits recorded for this vehicle.</p>`;
+        }
+      } catch (err) {
+        alert("Error looking up plate: " + err.message);
+      }
+    }
+
+    // Dashboard Stats Fetcher
+    async function fetchStats() {
+      try {
+        const resp = await fetch("/api/stats");
+        const stats = await resp.json();
+        updateStatsUI(stats);
+      } catch (err) {
+        console.error("Stats fetch error:", err);
+      }
+    }
+
+    function updateStatsUI(stats) {
+      if (!stats) return;
+      document.getElementById("statTotalToday").textContent = stats.total_today || 0;
+      document.getElementById("statCurrentlyInside").textContent = stats.currently_inside || 0;
+      document.getElementById("statExitedToday").textContent = stats.exited_today || 0;
+      document.getElementById("statAvgStay").textContent = stats.avg_stay_duration || "0 mins";
+    }
+
+    // Manual Modal
+    function openManualModal() {
+      document.getElementById("manualModal").classList.add("open");
+    }
+    function closeManualModal() {
+      document.getElementById("manualModal").classList.remove("open");
+    }
+
+    async function submitManualEntry() {
+      const plate = document.getElementById("manualPlateInput").value.trim();
+      const status = document.getElementById("manualStatusSelect").value;
+      if (!plate || plate.length < 4) {
+        alert("Please enter a valid vehicle license plate number");
+        return;
+      }
+
+      try {
+        const resp = await fetch("/api/records/manual", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            plate_number: plate,
+            status: status,
+            source: "Security Guard Manual"
+          })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          closeManualModal();
+          document.getElementById("manualPlateInput").value = "";
+          loadRecords();
+          fetchStats();
+          alert(data.event.message);
+        }
+      } catch (err) {
+        alert("Submission failed: " + err.message);
+      }
+    }
+
+    // Initial load
+    fetchStats();
+    loadRecords();
+  </script>
+</body>
+</html>
