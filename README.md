@@ -1,3 +1,13 @@
+---
+title: PlateTrack AI ANPR Backend
+emoji: 🚘
+colorFrom: purple
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # 🚘 PlateTrack AI - Smart Vehicle ANPR & Stay Monitoring System
 
 An AI-powered Automatic Number Plate Recognition (ANPR) and vehicle stay duration monitoring dashboard with a clean purple & white user interface, real-time Indian Standard Time (IST) tracking, live gate scanning, and automated Excel reporting.
