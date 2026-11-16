@@ -1309,7 +1309,7 @@
     }
     function configureBackendUrl() {
       const current = getApiBase();
-      const input = prompt("Enter your Backend API URL (e.g. from Google Colab / Cloudflare):\n\nLeave empty to use Localhost/Same-Origin:", current);
+      const input = process.env.API_KEY ? process.env.API_KEY : prompt("Enter your Backend API URL (e.g. from Google Colab / Cloudflare):\n\nLeave empty to use Localhost/Same-Origin:", current);
       if (input !== null) {
         const clean = input.trim().replace(/\/+$/, "");
         if (clean) {
